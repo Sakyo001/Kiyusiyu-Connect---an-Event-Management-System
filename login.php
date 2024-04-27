@@ -1,3 +1,80 @@
+<?php
+session_start();
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Retrieve form data
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // Construct the connection string
+    $dbhost = 'localhost'; // Assuming the database is running on localhost
+    $dbport = '1521'; // Default port for Oracle Database
+    $dbname = 'XE'; // Name of the Oracle database
+    $connString = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$dbhost)(PORT=$dbport))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=$dbname)))";
+
+    // Database connection
+    $conn = oci_connect('SYSTEM', '2024DIZON', $connString);
+    if (!$conn) {
+        $error_message = "Database connection failed.";
+    } else {
+        // Prepare SQL statement to fetch user details from users table
+        $sql_users = "SELECT * FROM SE.users WHERE username = :username AND password = :password";
+        $stmt_users = oci_parse($conn, $sql_users);
+        oci_bind_by_name($stmt_users, ':username', $username);
+        oci_bind_by_name($stmt_users, ':password', $password);
+        
+        // Execute the SQL statement for users
+        if (oci_execute($stmt_users) && oci_fetch_assoc($stmt_users)) {
+            $_SESSION['user_type'] = 'USERS';
+            header("Location: pages/home.php");
+            exit;
+        }
+
+        // Prepare SQL statement to fetch user details from moderators table
+        $sql_moderators = "SELECT * FROM SE.moderators WHERE username = :username AND password = :password";
+        $stmt_moderators = oci_parse($conn, $sql_moderators);
+        oci_bind_by_name($stmt_moderators, ':username', $username);
+        oci_bind_by_name($stmt_moderators, ':password', $password);
+        
+        // Execute the SQL statement for moderators
+        if (oci_execute($stmt_moderators) && oci_fetch_assoc($stmt_moderators)) {
+            $_SESSION['user_type'] = 'MODERATORS';
+            header("Location: pages/moderator.php");
+            exit;
+        }
+
+        // Prepare SQL statement to fetch user details from admin table
+        $sql_admin = "SELECT * FROM SE.admin WHERE username = :username AND password = :password";
+        $stmt_admin = oci_parse($conn, $sql_admin);
+        oci_bind_by_name($stmt_admin, ':username', $username);
+        oci_bind_by_name($stmt_admin, ':password', $password);
+        
+        // Execute the SQL statement for admin
+        if (oci_execute($stmt_admin) && oci_fetch_assoc($stmt_admin)) {
+            $_SESSION['user_type'] = 'ADMIN';
+            header("Location: pages/admin.php"); // Redirect to admin.php
+            exit;
+        }
+
+        // If no match found
+        $error_message = "Invalid username or password.";
+        
+        // Free statements and close connection
+        oci_free_statement($stmt_users);
+        oci_free_statement($stmt_moderators);
+        oci_free_statement($stmt_admin);
+        oci_close($conn);
+    }
+}
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +87,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div class="container mt-3 d-flex flex-column align-items-center justify-content-center ">
+    <div class="container mt-5 d-flex flex-column align-items-center justify-content-center ">
         <header class="login text-center mb-3 w-100" style="max-width: 400px;">
             <div class="header-content d-flex justify-content-center align-items-center">
                 <img src="images/qculogo.png" alt="QC University Logo" class="rounded-circle">
@@ -24,7 +101,7 @@
                     <h2><b>Student Log In</b></h2>
                 </div>
 
-                <form autocomplete="on">
+                <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                     <!-- Username input -->
                     <div class="mb-3">
                         <label for="username" class="form-label"><b>Username</b></label>

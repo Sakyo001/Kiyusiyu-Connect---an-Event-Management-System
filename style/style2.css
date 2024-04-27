@@ -1,0 +1,37 @@
+.custom-wh{
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+}
+
+.custom-rounded{
+    color: black;
+    
+}
+
+.dropdown-toggle {
+    width: 100%;
+    text-align: left;
+}
+
+.sidebar {
+    position: relative;
+}
+
+.dropdown-menu {
+    white-space: normal; /* Allow wrapping of text */
+}
+
+/* CSS style for the success container */
+.success-container {
+    background-color: #dff0d8; /* Bootstrap success color */
+    color: #3c763d; /* Bootstrap success text color */
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* CSS style for the check icon */
+.success-container .fas.fa-check-circle {
+    margin-right: 10px;
+}
